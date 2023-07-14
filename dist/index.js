@@ -504,7 +504,7 @@ const getNextVersion = (template) => {
     const versionNames = getTemplateVersionNames(template);
     const lastVer = versionNames[versionNames.length - 1];
     return lastVer && lastVer.startsWith('v')
-        ? `v${Number(lastVer.split('')[1]) + 1}`
+        ? `v${Number(lastVer.replace('v', '')) + 1}`
         : 'v1';
 };
 const getOutdatedVersions = (template, preserveVersions, purgeOutdatedVersions) => {
