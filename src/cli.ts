@@ -33,7 +33,7 @@ const cli = meow(
     --preserve-versions Number of versions to preserve per template
     --dry-run           Dry run
     --output-file, -o   Output template mapping json to file
-    --purge-outdated-versions  Purge outdated versions
+    --purge-outdated-versions  Purge outdated versions of template. New templates will not get created with this option enabled
 
   Examples
     $ SENDGRID_API_KEY=<SENDGRID_API_KEY> sendgrid-sync ./path/to/templates -p ./path/to/templates/partials 

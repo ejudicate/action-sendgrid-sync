@@ -21,22 +21,24 @@ GitHub action to sync handlebars template with sendgrid
     outputFile: ./mapping.json
     forceSyncAll: false
     dryRun: false
+    purgeOutdatedVersions: false
 ```
 
 ### Inputs:
 
-| Name | Requirement | Description |
-|:----:|:----------- |:----------- |
-| `githubToken` | _required_ | GitHub personal access token |
-| `sendgridApiKey` | _required_ | SendGrid API Key |
-| `templatesDir` | _required_ | Templates directory |
-| `partialsDir` | _optional_ | Partials directory |
-| `templatePrefix` | _optional_ | Template name prefix |
-| `subjectTemplate` | _optional_ | Subject template. Defaults to `{{subject}}` |
-| `preserveVersions` | _optional_ | Number of versions to preserve per template. Defaults to `'2'` |
-| `outputFile` | _optional_ | Output file path for the mapping json |
-| `dryRun` | _optional_ | Enable dry run mode |
-| `forceSyncAll` | _optional_ | Force sync all files in templates dir (Useful for initial synchronization) |
+|          Name           | Requirement | Description                                                                 |
+| :---------------------: | :---------- | :-------------------------------------------------------------------------- |
+|      `githubToken`      | _required_  | GitHub personal access token                                                |
+|    `sendgridApiKey`     | _required_  | SendGrid API Key                                                            |
+|     `templatesDir`      | _required_  | Templates directory                                                         |
+|      `partialsDir`      | _optional_  | Partials directory                                                          |
+|    `templatePrefix`     | _optional_  | Template name prefix                                                        |
+|    `subjectTemplate`    | _optional_  | Subject template. Defaults to `{{subject}}`                                 |
+|   `preserveVersions`    | _optional_  | Number of versions to preserve per template. Defaults to `'2'`              |
+|      `outputFile`       | _optional_  | Output file path for the mapping json                                       |
+|        `dryRun`         | _optional_  | Enable dry run mode                                                         |
+| `purgeOutdatedVersions` | _optional_  | Purge old versions. New templates will not get created if command is passed |
+|     `forceSyncAll`      | _optional_  | Force sync all files in templates dir (Useful for initial synchronization)  |
 
 ### Outputs:
 
@@ -58,14 +60,13 @@ $ npx sendgrid-sync -h
     --target, -t        Target template base names (names without the prefix specified with '--template-prefix')
     --preserve-versions Number of versions to preserve per template
     --dry-run           Dry run
+    --purge-outdated-versions          Purge outdated versions of template. New templates will not get created with this option enabled
     --output-file, -o   Output template mapping json to file
 
   Examples
     $ SENDGRID_API_KEY=<SENDGRID_API_KEY> sendgrid-sync ./path/to/templates -p ./path/to/templates/partials
     Sync all templates with SendGrid
 ```
-
-
 
 ### Sync all templates with SendGrid
 
@@ -78,5 +79,3 @@ $ npx sendgrid-sync path/to/templates/ -p path/to/partials/
 ```bash
 $ npx sendgrid-sync path/to/templates/ -p path/to/partials/ --template-prefix dev/ -t target_template_name_1 -t target_template_name_2
 ```
-
-
