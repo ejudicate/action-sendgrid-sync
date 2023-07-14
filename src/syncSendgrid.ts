@@ -13,6 +13,10 @@ const getTemplateVersionNames = (template: Template) => {
   return template.versions.map(v => v.name).sort((a, b) => a.localeCompare(b))
 }
 
+const getTemplateVersionIds = (template: Template) => {
+  return template.versions.filter(v => v.active !== 1).map(v => v.id)
+}
+
 const getNextVersion = (template: Template | undefined) => {
   if (!template || !template.versions || template.versions.length === 0)
     return 'v1'
@@ -22,13 +26,21 @@ const getNextVersion = (template: Template | undefined) => {
   const lastVer = versionNames[versionNames.length - 1]
 
   return lastVer && lastVer.startsWith('v')
-    ? `v${Number(lastVer.split('')[1]) + 1}`
+    ? `v${Number(lastVer.replace('v', '')) + 1}`
     : 'v1'
 }
 
-const getOutdatedVersions = (template: Template, preserveVersions: number) => {
-  const versions = getTemplateVersionNames(template)
-  return versions.slice(0, versions.length + 1 - preserveVersions)
+const getOutdatedVersions = (
+  template: Template,
+  preserveVersions: number,
+  purgeOutdatedVersions?: boolean
+) => {
+  // const versions = purgeOutdatedVersions
+  //   ? getTemplateVersionIds(template)
+  //   : getTemplateVersionNames(template)
+  // return versions.slice(0, versions.length + 1 - preserveVersions)
+  const versions = getTemplateVersionIds(template)
+  return versions.slice(preserveVersions)
 }
 
 const createTemplatePrefixer = (prefix: string) => (name: string) =>
@@ -44,6 +56,7 @@ export interface SyncOptions {
   subjectTemplate?: string
   preserveVersions?: number
   dryRun?: boolean
+  purgeOutdatedVersions?: boolean
   logger?: Logger
   debugLogger?: Logger
 }
@@ -78,7 +91,8 @@ export const sync = async (
     preserveVersions = 2,
     dryRun = false,
     logger = defaultLogger,
-    debugLogger = noopLogger
+    debugLogger = noopLogger,
+    purgeOutdatedVersions = false
   }: SyncOptions = {}
 ): Promise<{[tplName: string]: string}> => {
   const getTemplateName = createTemplatePrefixer(templatePrefix)
@@ -195,33 +209,35 @@ export const sync = async (
   updateVersionTemplates.length &&
     logger('[SendGrid] Creating new template versions:', dryRun)
 
-  // create new versions
-  await Promise.all(
-    updateVersionTemplates.map(async t => {
-      const name = getTemplateName(t)
-      const targetTemplate = templateByName[t]
-      const nextVer = getNextVersion(targetTemplate)
+  if (!purgeOutdatedVersions) {
+    // create new versions
+    await Promise.all(
+      updateVersionTemplates.map(async t => {
+        const name = getTemplateName(t)
+        const targetTemplate = templateByName[t]
+        const nextVer = getNextVersion(targetTemplate)
 
-      logger(
-        `  - Creating new version for template: ${name} (${nextVer})`,
-        dryRun
-      )
+        logger(
+          `  - Creating new version for template: ${name} (${nextVer})`,
+          dryRun
+        )
 
-      if (dryRun) {
-        return Promise.resolve()
-      }
+        if (dryRun) {
+          return Promise.resolve()
+        }
 
-      return targetTemplate
-        ? createTemplateVersion(targetTemplate.id, {
-            name: nextVer,
-            subject: subjectTemplate,
-            active: 1,
-            html_content: templateMap[t],
-            plain_content: ''
-          })
-        : Promise.resolve()
-    })
-  )
+        return targetTemplate
+          ? createTemplateVersion(targetTemplate.id, {
+              name: nextVer,
+              subject: subjectTemplate,
+              active: 1,
+              html_content: templateMap[t],
+              plain_content: ''
+            })
+          : Promise.resolve()
+      })
+    )
+  }
 
   const hasOutdated = Boolean(
     updateVersionTemplates.find(t => {
@@ -237,7 +253,11 @@ export const sync = async (
     updateVersionTemplates.map(async t => {
       const name = getTemplateName(t)
       const targetTemplate = templateByName[t]
-      const outdated = getOutdatedVersions(targetTemplate, preserveVersions)
+      const outdated = getOutdatedVersions(
+        targetTemplate,
+        preserveVersions,
+        purgeOutdatedVersions
+      )
 
       return await Promise.all(
         outdated.map(async v => {
@@ -247,11 +267,17 @@ export const sync = async (
             return Promise.resolve()
           }
 
-          return deleteTemplateVersion(
-            targetTemplate.id,
-            targetTemplate.versions.find(version => version.name === v)
-              ?.id as string
-          )
+          // return Promise.resolve()
+
+          // if (purgeOutdatedVersions) {
+          return deleteTemplateVersion(targetTemplate.id, v)
+          // } else {
+          //   return deleteTemplateVersion(
+          //     targetTemplate.id,
+          //     targetTemplate.versions.find(version => version.name === v)
+          //       ?.id as string
+          //   )
+          // }
         })
       )
     })

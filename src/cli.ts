@@ -33,6 +33,7 @@ const cli = meow(
     --preserve-versions Number of versions to preserve per template
     --dry-run           Dry run
     --output-file, -o   Output template mapping json to file
+    --purge-outdated-versions  Purge outdated versions of template. New templates will not get created with this option enabled
 
   Examples
     $ SENDGRID_API_KEY=<SENDGRID_API_KEY> sendgrid-sync ./path/to/templates -p ./path/to/templates/partials 
@@ -75,6 +76,10 @@ const cli = meow(
         alias: 'o',
         default: ''
       },
+      purgeOutdatedVersions: {
+        type: 'boolean',
+        default: false
+      },
       help: {
         alias: 'h'
       },
@@ -101,7 +106,8 @@ const {
   preserveVersions,
   dryRun,
   apiKey,
-  output
+  output,
+  purgeOutdatedVersions
 } = flags
 
 // eslint-disable-next-line no-console
@@ -119,6 +125,7 @@ ${chalk.yellow('Dry Run             :')} ${dryRun ? 'true' : 'false'}
 ${chalk.yellow('Output File         :')} ${
     output ? path.resolve(process.cwd(), output) : 'No output'
   }
+${chalk.yellow('Purge Outdated Versions    :')} ${purgeOutdatedVersions}
   `
 )
 
@@ -174,6 +181,7 @@ const execSync = async () => {
     subjectTemplate,
     preserveVersions,
     dryRun,
+    purgeOutdatedVersions,
     logger: log
   })
 
@@ -191,6 +199,8 @@ const run = async () => {
   try {
     await execSync()
   } catch (e) {
+    // eslint-disable-next-line no-console
+    console.log(e)
     logError(e.message)
   }
 }
